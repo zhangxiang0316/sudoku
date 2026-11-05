@@ -20,7 +20,11 @@
 ./gradlew testDebugUnitTest
 ```
 
-安装包：`app/build/outputs/apk/release/app-release-signed.apk`（1.0 MB）
+**下载安装包**：[Releases · v1.0.0](https://github.com/zhangxiang0316/sudoku/releases/latest)（1.0 MB，Android 8.0+）
+
+本地构建的产物在 `app/build/outputs/apk/release/app-release.apk`。
+
+> release 签名密钥放在 `keystore.properties`（不入库）。缺少该文件时 release 构建仍可完成，只是不签名。
 
 或用 Android Studio 打开本目录直接运行。
 
