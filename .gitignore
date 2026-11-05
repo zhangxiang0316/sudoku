@@ -15,3 +15,12 @@ robolectric-deps/
 
 # Kotlin daemon logs, they contain local absolute paths
 .kotlin/
+
+# Release signing key and its password, never commit these
+keystore.properties
+keystore/
+*.jks
+*.keystore
+
+# Built artifacts handed out from Releases
+dist/
