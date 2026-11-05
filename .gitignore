@@ -1,0 +1,17 @@
+*.iml
+.gradle/
+.gradle-home/
+local.properties
+.idea/
+.DS_Store
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+app/build/
+.android-home/
+.test-home/
+robolectric-deps/
+
+# Kotlin daemon logs, they contain local absolute paths
+.kotlin/
