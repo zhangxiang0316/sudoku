@@ -11,6 +11,9 @@
 
 ## 运行
 
+需要 JDK 17 和 Android SDK（compileSdk 36）。用 Android Studio 打开会自动生成
+`local.properties`；命令行构建则设置 `ANDROID_HOME` 环境变量即可。
+
 ```bash
 ./gradlew installRelease   # 装到设备（正式版，1MB）
 ./gradlew installDebug     # 调试版（11MB，带调试工具）
