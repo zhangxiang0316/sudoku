@@ -20,7 +20,7 @@
 ./gradlew testDebugUnitTest
 ```
 
-**下载安装包**：[Releases · v1.0.0](https://github.com/zhangxiang0316/sudoku/releases/latest)（1.0 MB，Android 8.0+）
+**下载安装包**：[Releases · 最新版](https://github.com/zhangxiang0316/sudoku/releases/latest)（1.0 MB，Android 8.0+）
 
 本地构建的产物在 `app/build/outputs/apk/release/app-release.apk`。
 
