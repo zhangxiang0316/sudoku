@@ -43,6 +43,36 @@ object NoFeedback : GameFeedback {
 /** A single tone in a cue. */
 internal data class Note(val frequency: Double, val millis: Int)
 
+/** One vibration pattern: alternating on/off durations plus the strength of each "on" segment. */
+internal data class VibrateCue(val timings: LongArray, val amplitudes: IntArray)
+
+/**
+ * Builds vibration effects in a way every device accepts.
+ *
+ * The amplitudes overload only works where the motor can actually scale strength. On phones
+ * that cannot, some ROMs ignore the request or refuse it outright, which shows up as "sound
+ * plays but nothing vibrates". Falling back to the plain timings overload keeps those phones
+ * buzzing at the motor's own strength instead of going silent.
+ */
+internal object Haptics {
+
+    /** Phone motors need roughly 20ms or more before a pulse is felt at all. */
+    const val MIN_ON_MILLIS = 20L
+
+    fun effect(cue: VibrateCue, amplitudeControl: Boolean): VibrationEffect =
+        if (amplitudeControl) {
+            VibrationEffect.createWaveform(cue.timings, cue.amplitudes, -1)
+        } else {
+            VibrationEffect.createWaveform(cue.timings, -1)
+        }
+
+    /** True when every "on" segment is long enough to be felt. */
+    fun isPerceptible(cue: VibrateCue): Boolean {
+        val onSegments = cue.timings.drop(1).filterIndexed { index, _ -> index % 2 == 0 }
+        return onSegments.isNotEmpty() && onSegments.all { it >= MIN_ON_MILLIS }
+    }
+}
+
 /**
  * The cues, defined once so both playback and tests read the same source of truth.
  *
@@ -90,6 +120,46 @@ internal object Cues {
  * Turns notes into 16-bit mono PCM. Separated from playback so the waveform can be inspected
  * without a device: a cue that silently rendered silence would otherwise look fine.
  */
+/**
+ * The vibration patterns, kept next to [Cues] so the two can be read side by side.
+ *
+ * Every "on" segment is at least [Haptics.MIN_ON_MILLIS] long. The first version used 12ms
+ * and 18ms pulses for the two most frequent actions, which most phone motors cannot render at
+ * all, so a correct digit and an erase felt like nothing happened.
+ */
+internal object VibrateCues {
+    /** Placing a digit correctly: one short acknowledgement. */
+    val correct = VibrateCue(
+        timings = longArrayOf(0, 30),
+        amplitudes = intArrayOf(0, 130),
+    )
+
+    /** A clash: two pulses, so it reads as "no" rather than "yes". */
+    val wrong = VibrateCue(
+        timings = longArrayOf(0, 55, 60, 55),
+        amplitudes = intArrayOf(0, 200, 0, 200),
+    )
+
+    /** Finishing the puzzle: a longer rising three-beat. */
+    val win = VibrateCue(
+        timings = longArrayOf(0, 45, 45, 45, 45, 150),
+        amplitudes = intArrayOf(0, 170, 0, 170, 0, 255),
+    )
+
+    /** Erasing: the lightest of the four. */
+    val tap = VibrateCue(
+        timings = longArrayOf(0, 22),
+        amplitudes = intArrayOf(0, 90),
+    )
+
+    val all: Map<String, VibrateCue> = mapOf(
+        "correct" to correct,
+        "wrong" to wrong,
+        "win" to win,
+        "tap" to tap,
+    )
+}
+
 internal object Synthesis {
     const val SAMPLE_RATE = 44_100
     const val AMPLITUDE = 0.22
@@ -155,47 +225,49 @@ class SoundHapticFeedback(context: Context) : GameFeedback {
      */
     private val activeTracks = AtomicInteger(0)
 
-    private val vibrator: Vibrator? by lazy {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val manager = appContext.getSystemService(VibratorManager::class.java)
-                manager?.defaultVibrator
-            } else {
-                @Suppress("DEPRECATION")
-                appContext.getSystemService(Vibrator::class.java)
-            }
-        } catch (t: Throwable) {
-            // A missing vibrator must never take the game down.
-            null
+    private val vibrator: Vibrator? by lazy { resolveVibrator(appContext) }
+
+    private fun resolveVibrator(context: Context): Vibrator? {
+        // Prefer the modern manager, then fall back: some devices answer one path but not the
+        // other, and a null here would silently disable every vibration.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            runCatching { context.getSystemService(VibratorManager::class.java)?.defaultVibrator }
+                .getOrNull()
+                ?.let { return it }
         }
+        return runCatching {
+            @Suppress("DEPRECATION")
+            context.getSystemService(Vibrator::class.java)
+        }.getOrNull()
     }
 
     override fun correct() {
         play(Cues.correct)
-        buzz(longArrayOf(0, 18), intArrayOf(0, 70))
+        buzz(VibrateCues.correct)
     }
 
     override fun wrong() {
         play(Cues.wrong)
-        buzz(longArrayOf(0, 55, 70, 55), intArrayOf(0, 150, 0, 150))
+        buzz(VibrateCues.wrong)
     }
 
     override fun win() {
         play(Cues.win)
-        buzz(longArrayOf(0, 40, 55, 40, 55, 130), intArrayOf(0, 160, 0, 160, 0, 220))
+        buzz(VibrateCues.win)
     }
 
     override fun tap() {
         play(Cues.tap)
-        buzz(longArrayOf(0, 12), intArrayOf(0, 45))
+        buzz(VibrateCues.tap)
     }
 
-    private fun buzz(timings: LongArray, amplitudes: IntArray) {
+    private fun buzz(cue: VibrateCue) {
         if (quiet) return
         val target = vibrator ?: return
-        if (!target.hasVibrator()) return
+        // hasVibrator() is not consulted on purpose: it reports false on some devices that do
+        // have a motor when queried through VibratorManager. Trying is harmless anyway.
         try {
-            target.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
+            target.vibrate(Haptics.effect(cue, target.hasAmplitudeControl()))
         } catch (t: Throwable) {
             // Vibration is a nicety on top of the game.
         }
