@@ -1,0 +1,255 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* SudokuKidsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* SudokuKidsApp.swift */; };
+		A10000000000000000000002 /* GameCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000002 /* GameCore.swift */; };
+		A10000000000000000000003 /* GameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* GameStore.swift */; };
+		A10000000000000000000004 /* GameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* GameViewModel.swift */; };
+		A10000000000000000000005 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000005 /* HomeView.swift */; };
+		A10000000000000000000006 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* GameView.swift */; };
+		A10000000000000000000007 /* SudokuBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000007 /* SudokuBoardView.swift */; };
+		A10000000000000000000008 /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000008 /* LeaderboardView.swift */; };
+		A10000000000000000000009 /* GameDialogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000009 /* GameDialogView.swift */; };
+		A10000000000000000000010 /* GameCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000010 /* GameCoreTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C10000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D10000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E10000000000000000000001;
+			remoteInfo = SudokuKids;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		B10000000000000000000001 /* SudokuKidsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SudokuKidsApp.swift; sourceTree = "<group>"; };
+		B10000000000000000000002 /* GameCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCore.swift; sourceTree = "<group>"; };
+		B10000000000000000000003 /* GameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStore.swift; sourceTree = "<group>"; };
+		B10000000000000000000004 /* GameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewModel.swift; sourceTree = "<group>"; };
+		B10000000000000000000005 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		B10000000000000000000006 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
+		B10000000000000000000007 /* SudokuBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SudokuBoardView.swift; sourceTree = "<group>"; };
+		B10000000000000000000008 /* LeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
+		B10000000000000000000009 /* GameDialogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameDialogView.swift; sourceTree = "<group>"; };
+		B10000000000000000000010 /* GameCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCoreTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000011 /* SudokuKids.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SudokuKids.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000000000000000000012 /* SudokuKidsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SudokuKidsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F10000000000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		F10000000000000000000002 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		G10000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				G10000000000000000000002 /* SudokuKids */,
+				G10000000000000000000003 /* SudokuKidsTests */,
+				G10000000000000000000004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		G10000000000000000000002 /* SudokuKids */ = {
+			isa = PBXGroup;
+			path = SudokuKids;
+			sourceTree = "<group>";
+			children = (
+				G10000000000000000000005 /* Core */,
+				G10000000000000000000006 /* UI */,
+			);
+		};
+		G10000000000000000000005 /* Core */ = {
+			isa = PBXGroup;
+			path = Core;
+			sourceTree = "<group>";
+			children = (
+				B10000000000000000000002 /* GameCore.swift */,
+				B10000000000000000000003 /* GameStore.swift */,
+				B10000000000000000000004 /* GameViewModel.swift */,
+			);
+		};
+		G10000000000000000000006 /* UI */ = {
+			isa = PBXGroup;
+			path = UI;
+			sourceTree = "<group>";
+			children = (
+				B10000000000000000000001 /* SudokuKidsApp.swift */,
+				B10000000000000000000005 /* HomeView.swift */,
+				B10000000000000000000006 /* GameView.swift */,
+				B10000000000000000000007 /* SudokuBoardView.swift */,
+				B10000000000000000000008 /* LeaderboardView.swift */,
+				B10000000000000000000009 /* GameDialogView.swift */,
+			);
+		};
+		G10000000000000000000003 /* SudokuKidsTests */ = {
+			isa = PBXGroup;
+			path = SudokuKidsTests;
+			sourceTree = "<group>";
+			children = (
+				B10000000000000000000010 /* GameCoreTests.swift */,
+			);
+		};
+		G10000000000000000000004 /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+			children = (
+				B10000000000000000000011 /* SudokuKids.app */,
+				B10000000000000000000012 /* SudokuKidsTests.xctest */,
+			);
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E10000000000000000000001 /* SudokuKids */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = H10000000000000000000002 /* Build configuration list for PBXNativeTarget "SudokuKids" */;
+			buildPhases = (I10000000000000000000001 /* Sources */, F10000000000000000000001 /* Frameworks */, J10000000000000000000001 /* Resources */);
+			buildRules = ();
+			dependencies = ();
+			name = SudokuKids;
+			productName = SudokuKids;
+			productReference = B10000000000000000000011 /* SudokuKids.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E10000000000000000000002 /* SudokuKidsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = H10000000000000000000003 /* Build configuration list for PBXNativeTarget "SudokuKidsTests" */;
+			buildPhases = (I10000000000000000000002 /* Sources */, F10000000000000000000002 /* Frameworks */, J10000000000000000000002 /* Resources */);
+			buildRules = ();
+			dependencies = (K10000000000000000000001 /* PBXTargetDependency */,);
+			name = SudokuKidsTests;
+			productName = SudokuKidsTests;
+			productReference = B10000000000000000000012 /* SudokuKidsTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D10000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					E10000000000000000000001 = { CreatedOnToolsVersion = 27.0; };
+					E10000000000000000000002 = { CreatedOnToolsVersion = 27.0; TestTargetID = E10000000000000000000001; };
+				};
+			};
+			buildConfigurationList = H10000000000000000000001 /* Build configuration list for PBXProject "SudokuKids" */;
+			compatibilityVersion = "Xcode 15.0";
+			developmentRegion = zh_CN;
+			knownRegions = (en, zh_CN, Base);
+			mainGroup = G10000000000000000000001;
+			productRefGroup = G10000000000000000000004 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (E10000000000000000000001 /* SudokuKids */, E10000000000000000000002 /* SudokuKidsTests */);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		J10000000000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		J10000000000000000000002 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		I10000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000001 /* SudokuKidsApp.swift in Sources */,
+				A10000000000000000000002 /* GameCore.swift in Sources */,
+				A10000000000000000000003 /* GameStore.swift in Sources */,
+				A10000000000000000000004 /* GameViewModel.swift in Sources */,
+				A10000000000000000000005 /* HomeView.swift in Sources */,
+				A10000000000000000000006 /* GameView.swift in Sources */,
+				A10000000000000000000007 /* SudokuBoardView.swift in Sources */,
+				A10000000000000000000008 /* LeaderboardView.swift in Sources */,
+				A10000000000000000000009 /* GameDialogView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		I10000000000000000000002 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000010 /* GameCoreTests.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		K10000000000000000000001 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = E10000000000000000000001 /* SudokuKids */; targetProxy = C10000000000000000000001 /* PBXContainerItemProxy */; };
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		H10000000000000000000011 /* Debug project */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; IPHONEOS_DEPLOYMENT_TARGET = 16.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; }; name = Debug; };
+		H10000000000000000000012 /* Release project */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; IPHONEOS_DEPLOYMENT_TARGET = 16.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; }; name = Release; };
+		H10000000000000000000021 /* Debug app */ = {isa = XCBuildConfiguration; buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "数独乐园";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.family.sudoku.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			}; name = Debug; };
+		H10000000000000000000022 /* Release app */ = {isa = XCBuildConfiguration; buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "数独乐园";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.family.sudoku.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			}; name = Release; };
+		H10000000000000000000031 /* Debug tests */ = {isa = XCBuildConfiguration; buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.family.sudoku.ios.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SudokuKids.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SudokuKids";
+				TEST_TARGET_NAME = SudokuKids;
+			}; name = Debug; };
+		H10000000000000000000032 /* Release tests */ = {isa = XCBuildConfiguration; buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.family.sudoku.ios.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SudokuKids.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SudokuKids";
+				TEST_TARGET_NAME = SudokuKids;
+			}; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		H10000000000000000000001 /* Project configuration list */ = {isa = XCConfigurationList; buildConfigurations = (H10000000000000000000011 /* Debug project */, H10000000000000000000012 /* Release project */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		H10000000000000000000002 /* App configuration list */ = {isa = XCConfigurationList; buildConfigurations = (H10000000000000000000021 /* Debug app */, H10000000000000000000022 /* Release app */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		H10000000000000000000003 /* Tests configuration list */ = {isa = XCConfigurationList; buildConfigurations = (H10000000000000000000031 /* Debug tests */, H10000000000000000000032 /* Release tests */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+	};
+	rootObject = D10000000000000000000001 /* Project object */;
+}

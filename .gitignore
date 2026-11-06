@@ -24,3 +24,8 @@ keystore/
 
 # Built artifacts handed out from Releases
 dist/
+
+# Xcode user state and local build output
+**/xcuserdata/
+*.xcuserstate
+ios/build/
