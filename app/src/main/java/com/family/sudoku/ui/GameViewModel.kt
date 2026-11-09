@@ -10,6 +10,8 @@ import com.family.sudoku.data.toPreview
 import com.family.sudoku.feedback.GameFeedback
 import com.family.sudoku.feedback.SoundHapticFeedback
 import com.family.sudoku.game.ConflictExplainer
+import com.family.sudoku.game.HintPlanner
+import com.family.sudoku.game.HintStage
 import com.family.sudoku.game.AppScreen
 import com.family.sudoku.game.BoardSpec
 import com.family.sudoku.game.GameResult
@@ -60,6 +62,12 @@ data class GameUiState(
     val leaderboard: List<ScoreEntry> = emptyList(),
     val quietMode: Boolean = false,
     val conflict: ConflictMessage? = null,
+    /** Which step the next hint will show: guide, focus, then reveal. */
+    val hintStage: HintStage = HintStage.GUIDE,
+    /** Cell the current hint is pointing at, highlighted on the board. */
+    val hintFocus: Int? = null,
+    /** Sentence shown for the current teaching hint. */
+    val hintText: String? = null,
 ) {
     val spec: BoardSpec get() = size.spec
     val cellCount: Int get() = size.cellCount
@@ -177,6 +185,9 @@ class GameViewModel @JvmOverloads constructor(
                 canUndo = false,
                 hasSavedGame = false,
                 savedPreview = null,
+                hintStage = HintStage.GUIDE,
+                hintFocus = null,
+                hintText = null,
             )
         }
 
@@ -531,36 +542,64 @@ class GameViewModel @JvmOverloads constructor(
         if (current.hints >= current.hintAllowance) return
         clearConflict()
 
-        val selected = current.selectedCell
-        val target = selected?.takeIf {
-            current.puzzle[it] == 0 && current.board[it] != current.solution[it]
-        } ?: current.board.indices.firstOrNull {
-            current.puzzle[it] == 0 && current.board[it] != current.solution[it]
-        } ?: return
+        val step = HintPlanner.next(
+            board = current.board,
+            solution = current.solution,
+            spec = current.spec,
+            preferredCell = current.selectedCell,
+            stage = current.hintStage,
+        ) ?: return
 
-        val digit = current.solution[target]
-        val board = current.board.toMutableList().also { it[target] = digit }
-        val notes = current.notes.toMutableList().also { it[target] = 0 }
-        val bit = 1 shl (digit - 1)
-        for (peer in current.spec.peersOf(target)) {
-            if (board[peer] == 0) {
-                notes[peer] = notes[peer] and bit.inv()
+        when (step.stage) {
+            HintStage.GUIDE, HintStage.FOCUS -> {
+                // The first two steps only point at a technique or a cell. They do not fill
+                // anything in, so they cost no hint allowance; otherwise a child would be
+                // punished for asking to be taught.
+                _uiState.update {
+                    it.copy(
+                        hintStage = if (step.stage == HintStage.GUIDE) {
+                            HintStage.FOCUS
+                        } else {
+                            HintStage.REVEAL
+                        },
+                        hintFocus = step.cell,
+                        hintText = step.message,
+                    )
+                }
+                conflictJob?.cancel()
+                conflictJob = viewModelScope.launch {
+                    delay(HINT_VISIBLE_MS)
+                    _uiState.update { it.copy(hintText = null, hintFocus = null) }
+                }
             }
-        }
 
-        _uiState.update {
-            it.copy(
-                board = board,
-                notes = notes,
-                hints = it.hints + 1,
-                selectedCell = target,
-                noteMode = false,
-            )
-        }
-        saveActiveGame()
+            HintStage.REVEAL -> {
+                val digit = step.digit ?: return
+                val target = step.cell ?: return
+                val board = current.board.toMutableList().also { it[target] = digit }
+                val notes = current.notes.toMutableList().also { it[target] = 0 }
+                val bit = 1 shl (digit - 1)
+                for (peer in current.spec.peersOf(target)) {
+                    if (board[peer] == 0) {
+                        notes[peer] = notes[peer] and bit.inv()
+                    }
+                }
 
-        if (board == current.solution) {
-            finishGame()
+                _uiState.update {
+                    it.copy(
+                        board = board,
+                        notes = notes,
+                        hints = it.hints + 1,
+                        selectedCell = target,
+                        noteMode = false,
+                        hintStage = HintStage.GUIDE,
+                        hintFocus = null,
+                        hintText = null,
+                    )
+                }
+                saveActiveGame()
+                if (board == current.solution) finishGame()
+            }
         }
     }
 
@@ -790,6 +829,9 @@ class GameViewModel @JvmOverloads constructor(
     companion object {
         /** Long enough for a child to read the sentence, short enough not to linger. */
         const val CONFLICT_VISIBLE_MS = 3_200L
+
+        /** A teaching hint is a little longer than a mistake note, so it can be read. */
+        const val HINT_VISIBLE_MS = 4_800L
 
         private const val MAX_UNDO = 100
         private const val MAX_GAME_SECONDS = 24 * 60 * 60

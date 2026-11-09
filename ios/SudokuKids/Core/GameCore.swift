@@ -333,3 +333,144 @@ struct UndoState {
     var notes: [Int]
     var selected: Int?
 }
+
+// MARK: - Layered hints
+
+/// A hint in three steps, so a stuck child gets guidance before the answer.
+enum HintStage {
+    /// Which technique to think about, without pointing at a cell.
+    case guide
+    /// Which cell to look at, without giving the digit.
+    case focus
+    /// The digit itself.
+    case reveal
+}
+
+enum HintUnit {
+    case cell, row, column, box
+
+    var word: String {
+        switch self {
+        case .cell: "格"
+        case .row: "行"
+        case .column: "列"
+        case .box: "宫"
+        }
+    }
+}
+
+struct HintStep {
+    var stage: HintStage
+    var cell: Int?
+    var digit: Int?
+    var unit: HintUnit
+    var message: String
+}
+
+/// Finds the easiest technique that still applies: a naked single first, then a hidden
+/// single. Mirrors the Android implementation so both platforms teach the same way.
+enum HintPlanner {
+    static func candidates(board: [Int], size: BoardSize, index: Int) -> [Int] {
+        guard board.indices.contains(index) else { return [] }
+        var used = Set<Int>()
+        let row = index / size.rawValue
+        let column = index % size.rawValue
+        for offset in 0..<size.rawValue {
+            used.insert(board[row * size.rawValue + offset])
+            used.insert(board[offset * size.rawValue + column])
+        }
+        let boxRowStart = (row / size.boxRows) * size.boxRows
+        let boxColStart = (column / size.boxColumns) * size.boxColumns
+        for r in boxRowStart..<(boxRowStart + size.boxRows) {
+            for c in boxColStart..<(boxColStart + size.boxColumns) {
+                used.insert(board[r * size.rawValue + c])
+            }
+        }
+        return (1...size.rawValue).filter { !used.contains($0) }
+    }
+
+    static func next(
+        board: [Int],
+        solution: [Int],
+        size: BoardSize,
+        preferredCell: Int? = nil,
+        stage: HintStage = .guide
+    ) -> HintStep? {
+        guard board.count == size.count, solution.count == size.count else { return nil }
+        guard let target = pickTarget(board: board, size: size, preferred: preferredCell) else {
+            return nil
+        }
+        let digit = solution[target.cell]
+        guard (1...size.rawValue).contains(digit) else { return nil }
+
+        switch stage {
+        case .guide:
+            return HintStep(stage: .guide, cell: nil, digit: nil, unit: target.unit,
+                            message: guideText(target.unit))
+        case .focus:
+            return HintStep(stage: .focus, cell: target.cell, digit: nil, unit: target.unit,
+                            message: "看这一\(target.unit.word)，有哪个数字只能填在这里？")
+        case .reveal:
+            return HintStep(stage: .reveal, cell: target.cell, digit: digit, unit: target.unit,
+                            message: "这一\(target.unit.word)只能填 \(digit) 了")
+        }
+    }
+
+    private static func guideText(_ unit: HintUnit) -> String {
+        switch unit {
+        case .cell: "试试看：有没有哪一格，只剩一个数字能填？"
+        case .row: "试试看：这一行里，哪个数字只剩一个位置了？"
+        case .column: "试试看：这一列里，哪个数字只剩一个位置了？"
+        case .box: "试试看：这一宫里，哪个数字只剩一个位置了？"
+        }
+    }
+
+    private static func pickTarget(board: [Int], size: BoardSize, preferred: Int?) -> (cell: Int, unit: HintUnit)? {
+        if let preferred, board.indices.contains(preferred), board[preferred] == 0,
+           let explained = explainable(board: board, size: size, index: preferred) {
+            return explained
+        }
+        let empty = board.indices.filter { board[$0] == 0 }
+        for index in empty where candidates(board: board, size: size, index: index).count == 1 {
+            return (index, .cell)
+        }
+        for index in empty {
+            if let hidden = hiddenSingle(board: board, size: size, index: index) { return hidden }
+        }
+        return nil
+    }
+
+    private static func explainable(board: [Int], size: BoardSize, index: Int) -> (cell: Int, unit: HintUnit)? {
+        guard board.indices.contains(index), board[index] == 0 else { return nil }
+        if candidates(board: board, size: size, index: index).count == 1 { return (index, .cell) }
+        return hiddenSingle(board: board, size: size, index: index)
+    }
+
+    private static func hiddenSingle(board: [Int], size: BoardSize, index: Int) -> (cell: Int, unit: HintUnit)? {
+        let row = index / size.rawValue
+        let column = index % size.rawValue
+        let box = size.box(of: index)
+        let mine = candidates(board: board, size: size, index: index)
+
+        for digit in mine {
+            let rowPlaces = (0..<size.rawValue).filter { offset in
+                let cell = row * size.rawValue + offset
+                return board[cell] == 0 && candidates(board: board, size: size, index: cell).contains(digit)
+            }
+            if rowPlaces.count == 1 { return (index, .row) }
+
+            let colPlaces = (0..<size.rawValue).filter { offset in
+                let cell = offset * size.rawValue + column
+                return board[cell] == 0 && candidates(board: board, size: size, index: cell).contains(digit)
+            }
+            if colPlaces.count == 1 { return (index, .column) }
+
+            let boxPlaces = size.peers(of: index).filter { cell in
+                size.box(of: cell) == box && board[cell] == 0
+                    && candidates(board: board, size: size, index: cell).contains(digit)
+            }
+            if boxPlaces.count == 1 { return (index, .box) }
+        }
+        return nil
+    }
+}

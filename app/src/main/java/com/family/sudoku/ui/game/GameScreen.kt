@@ -145,7 +145,7 @@ fun GameScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .alpha(if (state.isGenerating) 0.35f else 1f),
-                    conflictCells = state.conflict?.cells.orEmpty(),
+                    conflictCells = (state.conflict?.cells.orEmpty() + listOfNotNull(state.hintFocus)),
                 )
 
                 if (state.isGenerating) {
@@ -160,6 +160,7 @@ fun GameScreen(
         // board underneath the child's finger.
         ConflictBanner(
             message = state.conflict,
+            hintText = state.hintText,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(CONFLICT_SLOT_HEIGHT),
@@ -347,14 +348,16 @@ private val CONFLICT_SLOT_HEIGHT = 40.dp
 @Composable
 private fun ConflictBanner(
     message: ConflictMessage?,
+    hintText: String? = null,
     modifier: Modifier = Modifier,
 ) {
     val dark = isDarkTheme
+    val shown = hintText ?: message?.text
     // AnimatedContent keeps the outgoing sentence on screen while it fades, which is exactly
     // what the fading banner needs. Storing "the last message" in a remembered MutableState
     // would have meant writing to state during composition, so it is avoided here.
     AnimatedContent(
-        targetState = message,
+        targetState = shown,
         transitionSpec = { fadeIn() togetherWith fadeOut() },
         contentAlignment = Alignment.Center,
         label = "conflict",
@@ -375,7 +378,7 @@ private fun ConflictBanner(
                     Text(text = "💡", fontSize = 14.sp)
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text = current.text,
+                        text = current,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = if (dark) HintInkDark else HintInk,

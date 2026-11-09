@@ -8,11 +8,13 @@ import com.family.sudoku.data.BoardSize
 import com.family.sudoku.data.Difficulty
 import com.family.sudoku.data.GameRepository
 import com.family.sudoku.game.AppScreen
+import com.family.sudoku.game.HintStage
 import kotlinx.coroutines.Dispatchers
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -160,7 +162,8 @@ class GameViewModelTest {
     @Test
     fun hintFillsACorrectCellAndIsLimited() {
         startAndSettle()
-        repeat(5) {
+        // Guide and focus cost nothing, so it takes several presses to spend the allowance.
+        repeat(12) {
             viewModel.useHint()
         }
         val state = viewModel.uiState.value
@@ -548,6 +551,66 @@ class GameViewModelTest {
         } finally {
             reopened.stopTimers()
         }
+    }
+
+    // --- 分层提示 -------------------------------------------------------------
+
+    @Test
+    fun teachingHintDoesNotConsumeAllowance() {
+        startAndSettle(BoardSize.FOUR, Difficulty.EASY)
+        val before = viewModel.uiState.value.hints
+
+        viewModel.useHint()
+        assertEquals("the guide step must not cost a hint", before, viewModel.uiState.value.hints)
+
+        viewModel.useHint()
+        assertEquals("the focus step must not cost a hint either", before, viewModel.uiState.value.hints)
+
+        viewModel.useHint()
+        assertEquals("only the reveal step costs a hint", before + 1, viewModel.uiState.value.hints)
+    }
+
+    @Test
+    fun theThreeHintStepsEscalate() {
+        startAndSettle(BoardSize.FOUR, Difficulty.EASY)
+
+        viewModel.useHint()
+        val guide = viewModel.uiState.value
+        assertNull("a guide must not point at a cell", guide.hintFocus)
+        assertTrue("a guide should be phrased as a question", guide.hintText!!.contains("试试看"))
+
+        viewModel.useHint()
+        val focus = viewModel.uiState.value
+        assertNotNull("the focus step should highlight a cell", focus.hintFocus)
+        assertTrue(
+            "the focus step should point at a cell, got: ${focus.hintText}",
+            focus.hintText!!.contains("看这一"),
+        )
+        assertFalse(
+            "the focus step must not reveal the answer digit",
+            Regex("""只能填 \\d 了""").containsMatchIn(focus.hintText!!),
+        )
+
+        viewModel.useHint()
+        val revealed = viewModel.uiState.value
+        assertEquals("the ladder resets after the reveal", HintStage.GUIDE, revealed.hintStage)
+    }
+
+    @Test
+    fun theRevealedDigitIsCorrect() {
+        startAndSettle(BoardSize.FOUR, Difficulty.EASY)
+        viewModel.useHint()
+        viewModel.useHint()
+        val target = viewModel.uiState.value.hintFocus
+
+        viewModel.useHint()
+        val state = viewModel.uiState.value
+        assertNotNull(target)
+        assertEquals(
+            "the hint must place the real answer",
+            state.solution[target!!],
+            state.board[target],
+        )
     }
 
     private fun solveCurrentBoard() {

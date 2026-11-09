@@ -41,6 +41,59 @@ final class GameCoreTests: XCTestCase {
         XCTAssertEqual(result.reason, .box)
     }
 
+    #if DEBUG
+    func testLayeredHintsEscalate() {
+        // Walk the whole ladder on a real generated board.
+        let generated = SudokuEngine.generate(size: .four, difficulty: .easy)
+        var board = generated.solution
+        board[0] = 0
+
+        let guide = HintPlanner.next(board: board, solution: generated.solution, size: .four, stage: .guide)
+        XCTAssertNotNil(guide)
+        XCTAssertNil(guide!.cell, "a guide must not point at a cell")
+        XCTAssertNil(guide!.digit, "a guide must not reveal the digit")
+        XCTAssertTrue(guide!.message.contains("试试看"))
+
+        let focus = HintPlanner.next(board: board, solution: generated.solution, size: .four, stage: .focus)
+        XCTAssertEqual(0, focus!.cell)
+        XCTAssertNil(focus!.digit, "focus must not reveal the digit")
+
+        let reveal = HintPlanner.next(board: board, solution: generated.solution, size: .four, stage: .reveal)
+        XCTAssertEqual(0, reveal!.cell)
+        XCTAssertEqual(generated.solution[0], reveal!.digit)
+    }
+
+    func testHintsAgreeOnTheTargetCell() {
+        let generated = SudokuEngine.generate(size: .six, difficulty: .medium)
+        var board = generated.solution
+        board[5] = 0
+        board[11] = 0
+
+        let focus = HintPlanner.next(board: board, solution: generated.solution, size: .six, stage: .focus)
+        let reveal = HintPlanner.next(board: board, solution: generated.solution, size: .six, stage: .reveal)
+        XCTAssertEqual(focus!.cell, reveal!.cell, "steps must point at the same cell")
+    }
+
+    func testSelectedCellIsPreferred() {
+        let generated = SudokuEngine.generate(size: .four, difficulty: .easy)
+        var board = generated.solution
+        board[2] = 0
+        board[13] = 0
+        let step = HintPlanner.next(
+            board: board, solution: generated.solution, size: .four,
+            preferredCell: 13, stage: .focus
+        )
+        XCTAssertEqual(13, step!.cell, "should help with the cell the child selected")
+    }
+
+    func testAFinishedBoardHasNoHint() {
+        let generated = SudokuEngine.generate(size: .four, difficulty: .easy)
+        XCTAssertNil(HintPlanner.next(
+            board: generated.solution, solution: generated.solution, size: .four
+        ))
+    }
+    #endif
+
     @MainActor
     func testStoreKeepsTenScoresPerSizeAndDifficulty() {
         let suite = "sudoku-ios-test-\(UUID().uuidString)"

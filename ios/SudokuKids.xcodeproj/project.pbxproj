@@ -197,7 +197,6 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "数独乐园";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.family.sudoku.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -211,7 +210,6 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "数独乐园";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.family.sudoku.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";

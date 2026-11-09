@@ -2,191 +2,300 @@ import SwiftUI
 
 struct GameView: View {
     @ObservedObject var model: GameViewModel
+    @Environment(\.theme) private var theme
 
     var body: some View {
         GeometryReader { geometry in
-            let boardSide = min(geometry.size.width - 32, geometry.size.height - (model.selectedSize == .nine ? 340 : 300), 560)
-            VStack(spacing: 9) {
+            let reserved: CGFloat = model.selectedSize == .nine ? 356 : 322
+            let boardSide = min(geometry.size.width - 32, geometry.size.height - reserved, 560)
+            VStack(spacing: 0) {
                 header
-                SudokuBoardView(model: model)
-                    .frame(width: max(220, boardSide), height: max(220, boardSide))
-                    .accessibilityIdentifier("board")
-                ConflictBanner(message: model.conflict)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+
+                Spacer(minLength: 10)
+
+                ZStack {
+                    SudokuBoardView(model: model)
+                        .frame(width: max(220, boardSide), height: max(220, boardSide))
+                        .opacity(model.isGenerating ? 0.35 : 1)
+                        .accessibilityIdentifier("board")
+
+                    if model.isGenerating {
+                        VStack(spacing: 14) {
+                            ProgressView()
+                                .controlSize(.large)
+                                .tint(theme.primary)
+                            Text("正在出题…")
+                                .font(.system(size: 14, weight: .medium, design: .rounded))
+                                .foregroundStyle(theme.onSurfaceVariant)
+                            Text("每一关都保证只有一个答案哦")
+                                .font(.system(size: 12))
+                                .foregroundStyle(theme.onSurfaceVariant.opacity(0.7))
+                        }
+                        .accessibilityIdentifier("generating_overlay")
+                    }
+                }
+
+                Spacer(minLength: 6)
+
+                ConflictBanner(message: model.conflict, hintText: model.hintText)
                     .frame(maxWidth: 560)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 38)
+                    .frame(height: 40)
                     .padding(.horizontal, 16)
+
+                Spacer(minLength: 6)
+
                 statusRow
-                    .padding(.horizontal, 18)
                     .frame(maxWidth: 560)
                     .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 16)
+
+                Spacer(minLength: 10)
+
                 toolRow
-                    .padding(.horizontal, 16)
                     .frame(maxWidth: 560)
                     .frame(maxWidth: .infinity)
-                numberPad
                     .padding(.horizontal, 16)
-                    .frame(maxWidth: 592)
+
+                Spacer(minLength: 10)
+
+                numberPad
+                    .frame(maxWidth: 560)
                     .frame(maxWidth: .infinity)
-                Spacer(minLength: 2)
+                    .padding(.horizontal, 16)
+
+                Spacer(minLength: 14)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Palette.paper)
-            .padding(.top, 5)
         }
-        .background(Palette.paper.ignoresSafeArea())
+        .background(theme.background.ignoresSafeArea())
     }
 
+    // MARK: Header
+
     private var header: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 6) {
             Button { model.dialog = .exit } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(Palette.ink)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(theme.onBackground)
                     .frame(width: 40, height: 40)
-                    .background(Palette.white, in: Circle())
             }
-            .accessibilityLabel("回到首页")
-            VStack(alignment: .leading, spacing: 2) {
+            .buttonStyle(.plain)
+            .accessibilityLabel("返回")
+
+            VStack(alignment: .leading, spacing: 1) {
                 Text("\(model.selectedSize.title) · \(model.selectedDifficulty.emoji) \(model.selectedDifficulty.title)")
-                    .font(.system(size: 15, weight: .heavy, design: .rounded))
-                    .foregroundStyle(Palette.ink)
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundStyle(theme.onBackground)
                 Text("已完成 \(model.filledCount)/\(model.selectedSize.count)")
-                    .font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.muted)
+                    .font(.system(size: 11))
+                    .foregroundStyle(theme.onSurfaceVariant)
             }
             Spacer(minLength: 4)
+
             Button { model.toggleQuietMode() } label: {
-                Image(systemName: model.quietMode ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Palette.ink)
-                    .frame(width: 38, height: 38)
-                    .background(Palette.white, in: Circle())
+                Text(model.quietMode ? "🔇" : "🔊")
+                    .font(.system(size: 15))
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 7)
+                    .background(theme.surfaceVariant.opacity(model.quietMode ? 1 : 0.5),
+                                in: RoundedRectangle(cornerRadius: 12))
             }
-            .accessibilityLabel(model.quietMode ? "开启声音与触感" : "静音")
+            .buttonStyle(.plain)
             .accessibilityIdentifier("quiet_toggle")
+
             Button { model.dialog = .pause } label: {
-                HStack(spacing: 5) {
-                    Image(systemName: "clock")
-                    Text(formatTime(model.seconds)).monospacedDigit()
+                HStack(spacing: 6) {
+                    Image(systemName: "pause.fill").font(.system(size: 13))
+                        .foregroundStyle(theme.onSurfaceVariant)
+                    Text(formatTime(model.seconds))
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundStyle(theme.onBackground)
+                        .monospacedDigit()
                 }
-                .font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundStyle(Palette.ink)
-                .padding(.horizontal, 11)
-                .frame(height: 38)
-                .background(Palette.hint, in: Capsule())
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(theme.surfaceVariant.opacity(0.7), in: RoundedRectangle(cornerRadius: 14))
             }
-            .disabled(model.isPaused || model.isGenerating || model.isComplete)
+            .buttonStyle(.plain)
+            .disabled(model.isPaused || model.isComplete)
         }
-        .padding(.horizontal, 16)
     }
+
+    // MARK: Status
 
     private var statusRow: some View {
         HStack(spacing: 8) {
-            status(label: "失误", value: "\(model.mistakes)", tint: model.mistakes > 0 ? Palette.error : Palette.muted)
-            status(label: "提示", value: "\(model.hints)/\(model.hintAllowance)", tint: Palette.muted)
-            Spacer()
-            Text(model.noteMode ? "✍️ 笔记模式" : "填数模式")
-                .font(.system(size: 12, weight: .bold, design: .rounded))
-                .foregroundStyle(model.noteMode ? Palette.teal : Palette.muted)
+            statusPill("失误", "\(model.mistakes)",
+                       accent: model.mistakes > 0 ? theme.error : theme.onSurfaceVariant)
+            statusPill("提示", "\(model.hints)/\(model.hintAllowance)", accent: theme.onSurfaceVariant)
+            Spacer(minLength: 4)
+            Text(model.noteMode ? "笔记模式" : "填数模式")
+                .font(.system(size: 12, weight: model.noteMode ? .bold : .medium))
+                .foregroundStyle(model.noteMode ? theme.secondary : theme.onSurfaceVariant)
         }
     }
 
-    private func status(label: String, value: String, tint: Color) -> some View {
-        HStack(spacing: 4) {
-            Text(label).foregroundStyle(Palette.muted)
-            Text(value).foregroundStyle(tint).fontWeight(.heavy)
+    private func statusPill(_ label: String, _ value: String, accent: Color) -> some View {
+        HStack(spacing: 5) {
+            Text(label).font(.system(size: 11)).foregroundStyle(theme.onSurfaceVariant)
+            Text(value).font(.system(size: 14, weight: .bold)).foregroundStyle(accent)
         }
-        .font(.system(size: 12, weight: .medium, design: .rounded))
         .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(Palette.white, in: Capsule())
+        .padding(.vertical, 5)
+        .background(theme.surfaceVariant.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
     }
+
+    // MARK: Tools
 
     private var toolRow: some View {
-        HStack(spacing: 8) {
-            tool(title: "撤销", symbol: "arrow.uturn.backward", enabled: model.canUndo) { model.undo() }
-            tool(title: model.noteMode ? "笔记中" : "笔记", symbol: "pencil.line", enabled: true, active: model.noteMode) { model.toggleNotes() }
-            tool(title: "擦除", symbol: "delete.left", enabled: model.selectedCell != nil) { model.eraseSelected() }
-            tool(title: "提示", symbol: "lightbulb", enabled: model.hints < model.hintAllowance) { model.useHint() }
+        HStack(spacing: 10) {
+            toolButton("撤销", symbol: "arrow.uturn.backward", active: false,
+                       enabled: model.canUndo) { model.undo() }
+            toolButton("笔记", symbol: "pencil.line", active: model.noteMode,
+                       enabled: true) { model.toggleNotes() }
+            toolButton("提示 \(model.hintAllowance - model.hints)", symbol: "lightbulb", active: false,
+                       enabled: model.hints < model.hintAllowance) { model.useHint() }
         }
-        .frame(height: 43)
     }
 
-    private func tool(title: String, symbol: String, enabled: Bool, active: Bool = false, action: @escaping () -> Void) -> some View {
+    private func toolButton(
+        _ title: String,
+        symbol: String,
+        active: Bool,
+        enabled: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
-            Label(title, systemImage: symbol)
-                .font(.system(size: 12, weight: .bold, design: .rounded))
-                .foregroundStyle(active ? Palette.teal : Palette.ink)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(active ? Palette.selected : Palette.white, in: RoundedRectangle(cornerRadius: 11))
-                .overlay(RoundedRectangle(cornerRadius: 11).stroke(active ? Palette.teal.opacity(0.4) : Palette.line.opacity(0.6), lineWidth: 1))
+            HStack(spacing: 6) {
+                Image(systemName: symbol).font(.system(size: 15))
+                Text(title).font(.system(size: 13, weight: .medium, design: .rounded))
+            }
+            .foregroundStyle(active ? theme.surface : theme.onBackground)
+            .frame(maxWidth: .infinity)
+            .frame(height: 46)
+            .background(active ? theme.secondary : theme.surface, in: RoundedRectangle(cornerRadius: 14))
+            .overlay {
+                if !active {
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(theme.outlineVariant.opacity(0.8), lineWidth: 1)
+                }
+            }
+            .opacity(enabled ? 1 : 0.4)
         }
         .buttonStyle(.plain)
         .disabled(!enabled || model.isPaused || model.isComplete)
-        .opacity(enabled ? 1 : 0.45)
     }
 
+    // MARK: Number pad
+
+    /// Same packing rule as Android: digits plus the erase key in one grid, so 4x4 is a single
+    /// row of five, 6x6 a single row of seven, and 9x9 two rows of five.
     private var numberPad: some View {
-        let digits = Array(1...model.selectedSize.rawValue)
-        return VStack(spacing: 6) {
-            if model.selectedSize == .nine {
-                HStack(spacing: 6) { ForEach(Array(digits.prefix(5)), id: \.self) { digitButton($0) } }
-                HStack(spacing: 6) { ForEach(Array(digits.suffix(4)), id: \.self) { digitButton($0) } }
-            } else {
-                HStack(spacing: 6) { ForEach(digits, id: \.self) { digitButton($0) } }
-            }
-        }
-        .frame(maxWidth: 560)
-        .frame(maxWidth: .infinity)
-    }
+        let size = model.selectedSize.rawValue
+        let columns = size <= 6 ? size + 1 : 5
+        let rows = (size + 1 + columns - 1) / columns
+        let keyHeight: CGFloat = size <= 6 ? 64 : 58
 
-    private func digitButton(_ digit: Int) -> some View {
-        let remaining = model.board.filter { $0 == digit }.count
-        let enabled = !model.isPaused && !model.isComplete && model.selectedCell != nil && remaining < model.selectedSize.rawValue
-        return Button { model.inputDigit(digit) } label: {
-            VStack(spacing: 1) {
-                Text("\(digit)")
-                    .font(.system(size: model.selectedSize == .nine ? 20 : 23, weight: .heavy, design: .rounded))
-                    .foregroundStyle(Palette.teal)
-                if model.selectedSize == .nine {
-                    Text("\(model.selectedSize.rawValue - remaining)")
-                        .font(.system(size: 8, weight: .medium, design: .rounded))
-                        .foregroundStyle(Palette.muted.opacity(0.75))
+        return VStack(spacing: 8) {
+            ForEach(0..<rows, id: \.self) { row in
+                HStack(spacing: 8) {
+                    ForEach(0..<columns, id: \.self) { column in
+                        let position = row * columns + column
+                        if position < size {
+                            digitKey(position + 1, height: keyHeight)
+                        } else if position == size {
+                            eraseKey(height: keyHeight)
+                        } else {
+                            Color.clear.frame(maxWidth: .infinity)
+                        }
+                    }
                 }
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: model.selectedSize == .nine ? 43 : 53)
-            .background(Palette.white, in: RoundedRectangle(cornerRadius: 10))
+        }
+    }
+
+    private func digitKey(_ digit: Int, height: CGFloat) -> some View {
+        let used = model.board.filter { $0 == digit }.count
+        let remaining = max(0, model.selectedSize.rawValue - used)
+        let enabled = !model.isPaused && !model.isComplete
+            && model.selectedCell != nil && remaining > 0
+        let content = model.noteMode ? theme.onSecondaryContainer : theme.onBackground
+        return Button { model.inputDigit(digit) } label: {
+            ZStack {
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(model.noteMode ? theme.secondaryContainer : theme.surface.opacity(0.96))
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(theme.outlineVariant.opacity(0.7), lineWidth: 1)
+                Text("\(digit)")
+                    .font(.system(size: model.selectedSize == .nine ? 28 : 32, weight: .bold, design: .rounded))
+                    .foregroundStyle(content.opacity(enabled ? 1 : 0.32))
+                if remaining > 0 && remaining < model.selectedSize.rawValue {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Text("\(remaining)")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundStyle(content.opacity(0.5))
+                                .padding(.trailing, 6)
+                                .padding(.bottom, 5)
+                        }
+                    }
+                }
+            }
+            .frame(height: height)
         }
         .buttonStyle(.plain)
         .disabled(!enabled)
-        .opacity(enabled ? 1 : 0.4)
         .accessibilityIdentifier("digit_\(digit)")
+    }
+
+    private func eraseKey(height: CGFloat) -> some View {
+        Button { model.eraseSelected() } label: {
+            ZStack {
+                RoundedRectangle(cornerRadius: 18).fill(theme.surfaceVariant)
+                Image(systemName: "delete.left")
+                    .font(.system(size: 21))
+                    .foregroundStyle(theme.onSurfaceVariant)
+            }
+            .frame(height: height)
+        }
+        .buttonStyle(.plain)
+        .disabled(model.isPaused || model.isComplete || model.selectedCell == nil)
+        .accessibilityLabel("擦除")
     }
 }
 
 private struct ConflictBanner: View {
+    @Environment(\.theme) private var theme
     let message: ConflictInfo?
+    var hintText: String?
+
     var body: some View {
-        Group {
-            if let message {
-                HStack(spacing: 7) {
-                    Text("💡")
-                    Text(message.message)
-                        .font(.system(size: 13, weight: .bold, design: .rounded))
+        ZStack {
+            if let shown = hintText ?? message?.message {
+                HStack(spacing: 6) {
+                    Text("💡").font(.system(size: 14))
+                    Text(shown)
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundStyle(theme.hintInk)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.72)
+                        .minimumScaleFactor(0.7)
                         .accessibilityIdentifier("conflict_text")
                     Spacer(minLength: 0)
                 }
-                .foregroundStyle(Color(red: 0.42, green: 0.29, blue: 0.07))
                 .padding(.horizontal, 12)
+                .padding(.vertical, 8)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Palette.hint, in: RoundedRectangle(cornerRadius: 11))
-                .transition(.opacity)
+                .background(theme.hintSurface, in: RoundedRectangle(cornerRadius: 12))
                 .accessibilityIdentifier("conflict_banner")
             }
         }
-        .animation(.easeInOut(duration: 0.18), value: message?.message)
+        .transition(.opacity)
+        .animation(.easeInOut(duration: 0.18), value: hintText ?? message?.message)
     }
 }

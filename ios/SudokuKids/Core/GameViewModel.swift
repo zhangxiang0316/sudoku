@@ -28,12 +28,16 @@ final class GameViewModel: ObservableObject {
     @Published var isComplete = false
     @Published var canUndo = false
     @Published var conflict: ConflictInfo?
+    @Published var hintStage: HintStage = .guide
+    @Published var hintFocus: Int?
+    @Published var hintText: String?
     @Published var dialog: Dialog?
     @Published var quietMode: Bool
     @Published var lastResult: GameResult?
 
     private let store: GameStore
     private var timer: Timer?
+    private var generationTask: Task<Void, Never>?
     private var conflictWork: DispatchWorkItem?
     private var undoStack: [UndoState] = []
     private var gameKey: GameKey?
@@ -87,6 +91,7 @@ final class GameViewModel: ObservableObject {
         store.lastDifficulty = difficulty
         store.clearGame()
         stopTimer()
+        generationTask?.cancel()
         conflictWork?.cancel()
         undoStack.removeAll()
         isGenerating = true
@@ -104,19 +109,35 @@ final class GameViewModel: ObservableObject {
         isComplete = false
         canUndo = false
         conflict = nil
+        hintStage = .guide
+        hintFocus = nil
+        hintText = nil
         dialog = nil
         gameKey = GameKey(size: size, difficulty: difficulty)
 
-        // 4x4, 6x6 and 9x9 generation is local and bounded by eight uniqueness checks.
-        let generated = SudokuEngine.generate(size: size, difficulty: difficulty)
-        puzzle = generated.puzzle
-        solution = generated.solution
-        board = generated.puzzle
-        notes = Array(repeating: 0, count: size.count)
-        selectedCell = puzzle.firstIndex(of: 0)
-        isGenerating = false
-        startTimer()
-        saveActiveGame()
+        // Generating a 9x9 board measured up to 64ms on the main thread, which is long
+        // enough to be felt as a stutter when starting a game. It now runs detached and the
+        // screen shows a loading overlay until the puzzle arrives.
+        generationTask?.cancel()
+        generationTask = Task { [weak self] in
+            let generated = await Task.detached(priority: .userInitiated) {
+                SudokuEngine.generate(size: size, difficulty: difficulty)
+            }.value
+
+            guard !Task.isCancelled, let self else { return }
+            // The player may have gone home or picked another board while this was running.
+            guard self.isGenerating, self.gameKey == GameKey(size: size, difficulty: difficulty) else {
+                return
+            }
+            self.puzzle = generated.puzzle
+            self.solution = generated.solution
+            self.board = generated.puzzle
+            self.notes = Array(repeating: 0, count: size.count)
+            self.selectedCell = generated.puzzle.firstIndex(of: 0)
+            self.isGenerating = false
+            self.startTimer()
+            self.saveActiveGame()
+        }
     }
 
     func continueGame() {
@@ -218,24 +239,49 @@ final class GameViewModel: ObservableObject {
     func useHint() {
         guard screen == .game, !isPaused, !isComplete, hints < hintAllowance else { return }
         clearConflict()
-        let target = selectedCell.flatMap { index in
-            puzzle[index] == 0 && board[index] != solution[index] ? index : nil
-        } ?? board.indices.first(where: { puzzle[$0] == 0 && board[$0] != solution[$0] })
-        guard let target else { return }
-        pushUndo()
-        let digit = solution[target]
-        board[target] = digit
-        notes[target] = 0
-        selectedCell = target
-        noteMode = false
-        hints += 1
-        let bit = 1 << (digit - 1)
-        for peer in selectedSize.peers(of: target) where board[peer] == 0 {
-            notes[peer] &= ~bit
+
+        guard let step = HintPlanner.next(
+            board: board, solution: solution, size: selectedSize,
+            preferredCell: selectedCell, stage: hintStage
+        ) else { return }
+
+        switch step.stage {
+        case .guide, .focus:
+            // The first two steps only point at a technique or a cell; nothing is filled in,
+            // so they cost no allowance. Being taught should not be penalised.
+            hintStage = step.stage == .guide ? .focus : .reveal
+            hintFocus = step.cell
+            hintText = step.message
+            scheduleHintDismissal()
+        case .reveal:
+            guard let target = step.cell, let digit = step.digit else { return }
+            pushUndo()
+            board[target] = digit
+            notes[target] = 0
+            selectedCell = target
+            noteMode = false
+            hints += 1
+            hintStage = .guide
+            hintFocus = nil
+            hintText = nil
+            let bit = 1 << (digit - 1)
+            for peer in selectedSize.peers(of: target) where board[peer] == 0 {
+                notes[peer] &= ~bit
+            }
+            canUndo = true
+            saveActiveGame()
+            if board == solution { finishGame() }
         }
-        canUndo = true
-        saveActiveGame()
-        if board == solution { finishGame() }
+    }
+
+    private func scheduleHintDismissal() {
+        conflictWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.hintText = nil
+            self?.hintFocus = nil
+        }
+        conflictWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.8, execute: work)
     }
 
     func restartPuzzle() {
